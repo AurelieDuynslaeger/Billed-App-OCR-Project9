@@ -43,7 +43,7 @@ Elaboration également un plan de test end-to-end manuel pour assurer le bon fon
 
 1. Clonez le repository de l'application
    ```sh
-   git clone https://github.com/AurelieDuynslaeger/Projet-7-OCR---Les-Petits-Plats
+   git clone https://github.com/AurelieDuynslaeger/Billed-App-OCR-Project8.git
    ```
 
 2. Suivez les instructions des 2 README
