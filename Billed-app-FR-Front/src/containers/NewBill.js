@@ -17,14 +17,42 @@ export default class NewBill {
   }
   handleChangeFile = e => {
     e.preventDefault()
-    const file = this.document.querySelector(`input[data-testid="file"]`).files[0]
-    const filePath = e.target.value.split(/\\/g)
-    const fileName = filePath[filePath.length-1]
+    //récupère le fichier sélectionné par l'utilisateur
+    //dom element
+    const fileInput = this.document.querySelector(`input[data-testid="file"]`);
+    //fichier chargé par l'user
+    const file = fileInput.files[0];
+
+    //verfier l'extension du fichier
+    //initialiser un tableau avec les extensions acceptées
+    const allowedExt = ['jpg', 'jpeg', 'png'];
+    //split pour diviser la chaine de caractère en un tableau
+    //sépérateur le .
+    //ex : document.pdf devient ['document', 'pdf']
+    //pop => renvoit le dernier élement du tableau (pdf)
+    const fileExt = file.name.split('.').pop().toLowerCase();
+
+
+    //si l'extension n'est pas bonne
+    if (!allowedExt.includes(fileExt)) {
+      console.error("Fichier invalide, veuillez charger un fichier avec l'exntesion jpg, jpeg ou png");
+      fileInput.value = '';
+      return;
+    }
+    //récupère le nom du fichier à partir du chemin du fichier
+    //fileInput.value = "C:\\Users\\Username\\Documents\\image.png"
+    //split => string to array : (exp regulière) : ["C:", "Users", "Username", "Documents", "image.png"]
+    const filePath = fileInput.value.split(/\\/g);
+    //"image.png"
+    const fileName = filePath[filePath.length - 1]
+
+    //crée un objet FormData pour envoyer les données du fichier et l'email de l'utilisateur
     const formData = new FormData()
     const email = JSON.parse(localStorage.getItem("user")).email
     formData.append('file', file)
     formData.append('email', email)
 
+    //appelle une méthode `create` sur un objet `bills` du store pour créer la facture
     this.store
       .bills()
       .create({
@@ -33,10 +61,14 @@ export default class NewBill {
           noContentType: true
         }
       })
-      .then(({fileUrl, key}) => {
+      .then(({ fileUrl, key }) => {
+        //affiche l'URL du fichier après sa création
         console.log(fileUrl)
+        //stocke l'identifiant de la facture créée
         this.billId = key
+        //stocke l'URL du fichier créé
         this.fileUrl = fileUrl
+        //stocke le nom du fichier
         this.fileName = fileName
       }).catch(error => console.error(error))
   }
@@ -47,9 +79,9 @@ export default class NewBill {
     const bill = {
       email,
       type: e.target.querySelector(`select[data-testid="expense-type"]`).value,
-      name:  e.target.querySelector(`input[data-testid="expense-name"]`).value,
+      name: e.target.querySelector(`input[data-testid="expense-name"]`).value,
       amount: parseInt(e.target.querySelector(`input[data-testid="amount"]`).value),
-      date:  e.target.querySelector(`input[data-testid="datepicker"]`).value,
+      date: e.target.querySelector(`input[data-testid="datepicker"]`).value,
       vat: e.target.querySelector(`input[data-testid="vat"]`).value,
       pct: parseInt(e.target.querySelector(`input[data-testid="pct"]`).value) || 20,
       commentary: e.target.querySelector(`textarea[data-testid="commentary"]`).value,
@@ -65,12 +97,12 @@ export default class NewBill {
   updateBill = (bill) => {
     if (this.store) {
       this.store
-      .bills()
-      .update({data: JSON.stringify(bill), selector: this.billId})
-      .then(() => {
-        this.onNavigate(ROUTES_PATH['Bills'])
-      })
-      .catch(error => console.error(error))
+        .bills()
+        .update({ data: JSON.stringify(bill), selector: this.billId })
+        .then(() => {
+          this.onNavigate(ROUTES_PATH['Bills'])
+        })
+        .catch(error => console.error(error))
     }
   }
 }
