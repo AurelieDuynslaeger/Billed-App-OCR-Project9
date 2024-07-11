@@ -3,12 +3,14 @@
  */
 
 import { screen, waitFor } from "@testing-library/dom"
+import userEvent from '@testing-library/user-event'
 import BillsUI from "../views/BillsUI.js"
 import { bills } from "../fixtures/bills.js"
 import { ROUTES_PATH } from "../constants/routes.js";
 import { localStorageMock } from "../__mocks__/localStorage.js";
 
 import router from "../app/Router.js";
+import Bills from "../containers/Bills.js";
 
 describe("Given I am connected as an employee", () => {
   describe("When I am on Bills Page", () => {
@@ -52,6 +54,36 @@ describe("Given I am connected as an employee", () => {
       // const antiChrono = (a, b) => ((a < b) ? 1 : -1)
       // const datesSorted = [...dates].sort(antiChrono)
       // expect(dates).toEqual(datesSorted)
+    })
+
+    //test for clik on icon eye line 14
+    test("Then modal should open and display the bill file when i click on eye icon", () => {
+      //rendu de l'interface des factures
+      document.body.innerHTML = BillsUI({ data: bills })
+
+      //instanciation de la class Bills
+      const billsContainer = new Bills({
+        document,
+        onNavigate: (pathname) => document.body.innerHTML = ROUTES_PATH[pathname],
+        store: null,
+        localStorage: window.localStorage
+      })
+
+      //récup des icones
+      const icon = screen.getAllByTestId('icon-eye')[0]
+
+      //verifier ajout attribut data-bill-url (handleClickIconEye effet)
+      icon.setAttribute('data-bill-url', 'https://test.com')
+      //simulation du clik sur l'icone
+      userEvent.click(icon);
+
+      //vérif de la modale qui s'affiche
+      expect(screen.getByTestId('modaleFile')).toBeTruthy()
+
+      //verif que l'image fichier facture est affiché dans la modale
+      const img = screen.getByTestId('modaleFile').querySelector('img');
+      expect(img).toBeTruthy()
+      expect(img.src).toBe('https://test.com/')
     })
   })
 })
