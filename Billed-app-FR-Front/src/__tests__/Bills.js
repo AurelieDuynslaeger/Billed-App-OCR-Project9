@@ -76,10 +76,25 @@ describe("Given I am connected as an employee", () => {
       //rendu de l'interface des factures
       document.body.innerHTML = BillsUI({ data: bills })
 
-      //ajout de la modale en reprenant les attributs
+      //ajout de la modale en reprenant les attributs et les class css
       const modale = document.createElement('div')
       modale.setAttribute('id', 'modaleFile')
       modale.setAttribute('data-testid', 'modaleFile')
+      modale.classList.add("modal", "fade")
+      //reconstitution de la structure de la modale
+      modale.innerHTML = `
+        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Justificatif</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body"></div>
+          </div>
+        </div>
+      `;
       document.body.append(modale)
 
       //mock de la méthode modal de JQuery
@@ -106,8 +121,12 @@ describe("Given I am connected as an employee", () => {
       //permet de s'assurer qu'une fonction fictive a été appelée avec des arguments spécifiques (ici show)
       expect($.fn.modal).toHaveBeenCalledWith("show")
 
+      //vérif que l'image du fichier de la facture est affichée dans la modale
+      const modalBody = document.querySelector("#modaleFile .modal-body");
+      expect(modalBody).toBeTruthy();
+
       //verif que l'image fichier facture est affiché dans la modale
-      const img = screen.getByTestId('modaleFile').querySelector('img');
+      const img = modalBody.querySelector('img');
       expect(img).toBeTruthy()
       expect(img.src).toBe('https://test.com/')
     })
