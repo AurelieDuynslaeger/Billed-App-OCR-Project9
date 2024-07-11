@@ -130,5 +130,57 @@ describe("Given I am connected as an employee", () => {
       expect(img).toBeTruthy()
       expect(img.src).toBe('https://test.com/')
     })
+    test("Then user should be redirected to new bill form when new bill button is clicked", async () => {
+      //configuration du localStorage pour simuler l'utilisateur connecté
+      Object.defineProperty(window, 'localStorage', { value: localStorageMock });
+      window.localStorage.setItem('user', JSON.stringify({
+        type: 'Employee'
+      }));
+
+      //création d'un élément root pour simuler le rendu de l'interface
+      const root = document.createElement("div");
+      root.setAttribute("id", "root");
+      document.body.append(root);
+
+      // Exécution du routeur pour simuler la navigation sur la page des factures
+      router();
+      window.onNavigate(ROUTES_PATH.Bills);
+
+      //attente de l'affichage de l'interface BillsUI
+      document.body.innerHTML = BillsUI({ data: bills });
+
+      //instanciation de la classe Bills
+      const billsContainer = new Bills({
+        document,
+        onNavigate: (pathname) => {
+          document.body.innerHTML = ROUTES_PATH[pathname];
+        },
+        store: null,
+        localStorage: window.localStorage,
+      });
+
+      //ajout du bouton New Bill au DOM
+      //attente que le bouton "Nouvelle Facture" soit présent dans le DOM
+
+      const buttonNewBill = screen.getByTestId('btn-new-bill');
+      expect(buttonNewBill).toBeTruthy();
+
+      buttonNewBill.addEventListener("click", () => {
+        billsContainer.handleClickNewBill();
+      });
+
+      userEvent.click(buttonNewBill);
+
+      //attente que l'utilisateur soit redirigé vers la nouvelle page de facturation (NewBillUI)
+      await waitFor(() => {
+        expect(window.location.pathname).toBe(ROUTES_PATH.NewBill);
+      });
+
+      // Vérification que NewBillUI est correctement rendue dans le DOM
+      expect(document.body.innerHTML).toContain('form-new-bill');
+
+      // Vérification finale avec getByTestId
+      expect(screen.getByTestId('form-new-bill')).toBeTruthy();
+    });
   })
 })
