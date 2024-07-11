@@ -56,10 +56,35 @@ describe("Given I am connected as an employee", () => {
       // expect(dates).toEqual(datesSorted)
     })
 
-    //test for clik on icon eye line 14
-    test("Then modal should open and display the bill file when i click on eye icon", () => {
+    //test clik on icon eye line 14 to display modal
+    test("Then modal should open and display the bill when i click on eye icon", () => {
+      //configuration du localStorage pour simuler l'utilisateur connect
+      Object.defineProperty(window, 'localStorage', { value: localStorageMock })
+      window.localStorage.setItem('user', JSON.stringify({
+        type: 'Employee'
+      }))
+
+      //création d'un élément root pour simuler le rendu de l'interface
+      const root = document.createElement("div")
+      root.setAttribute("id", "root")
+      document.body.append(root)
+
+      //exécution du routeur pour simuler la navigation sur la page des factures
+      router()
+      window.onNavigate(ROUTES_PATH.Bills)
+
       //rendu de l'interface des factures
       document.body.innerHTML = BillsUI({ data: bills })
+
+      //ajout de la modale en reprenant les attributs
+      const modale = document.createElement('div')
+      modale.setAttribute('id', 'modaleFile')
+      modale.setAttribute('data-testid', 'modaleFile')
+      document.body.append(modale)
+
+      //mock de la méthode modal de JQuery
+      //doc Jest
+      $.fn.modal = jest.fn()
 
       //instanciation de la class Bills
       const billsContainer = new Bills({
@@ -78,7 +103,8 @@ describe("Given I am connected as an employee", () => {
       userEvent.click(icon);
 
       //vérif de la modale qui s'affiche
-      expect(screen.getByTestId('modaleFile')).toBeTruthy()
+      //permet de s'assurer qu'une fonction fictive a été appelée avec des arguments spécifiques (ici show)
+      expect($.fn.modal).toHaveBeenCalledWith("show")
 
       //verif que l'image fichier facture est affiché dans la modale
       const img = screen.getByTestId('modaleFile').querySelector('img');
