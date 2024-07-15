@@ -21,7 +21,7 @@
 <!-- ABOUT THE PROJECT -->
 ## À propos du projet
 
-Billed est le projet 9 de ma formation OpenClassroom.
+Billed est le projet 9/14 de ma formation OpenClassroom.
 
 Mission : Vous êtes développeur front-end chez Billed, une entreprise qui produit des solutions Saas destinées aux équipes de ressources humaines.
 
