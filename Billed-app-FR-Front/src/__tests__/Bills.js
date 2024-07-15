@@ -5,24 +5,20 @@
 import { screen, waitFor } from "@testing-library/dom"
 import userEvent from '@testing-library/user-event'
 import BillsUI from "../views/BillsUI.js"
+import Bills from "../containers/Bills.js";
 import { bills } from "../fixtures/bills.js"
 import { ROUTES_PATH } from "../constants/routes.js";
 import { localStorageMock } from "../__mocks__/localStorage.js";
-
 import router from "../app/Router.js";
-import Bills from "../containers/Bills.js";
 
 //import du mockStore avec les mockedBills
-// import mockStore from "../__mocks__/store";
+import mockStore from "../__mocks__/store";
 
-//mock du store
-// jest.mock("../app/Store", () => mockStore);
-
-//mock des fonctions présentes sur Bills.js et qui sont appelés dans getBills
-// jest.mock("../app/format.js", () => ({
-//   formatDate: jest.fn((date) => `formatted_${date}`),
-//   formatStatus: jest.fn((status) => `formatted_${status}`),
-// }));
+// Mock des fonctions formatDate et formatStatus
+jest.mock("../app/format.js", () => ({
+  formatDate: jest.fn(date => `formatted_${date}`),
+  formatStatus: jest.fn(status => `formatted_${status}`)
+}));
 
 describe("Given I am connected as an employee", () => {
   describe("When I am on Bills Page", () => {
@@ -63,10 +59,6 @@ describe("Given I am connected as an employee", () => {
       const datesSortedISO = [...datesISO].sort((a, b) => new Date(b) - new Date(a));
       //vérifie que les dates affichées (converties en ISO) sont triées de manière correcte
       expect(datesISO).toEqual(datesSortedISO);
-
-      // const antiChrono = (a, b) => ((a < b) ? 1 : -1)
-      // const datesSorted = [...dates].sort(antiChrono)
-      // expect(dates).toEqual(datesSorted)
     })
     //test clik on icon eye line 14 to display modal
     test("Then modal should open and display the bill when i click on eye icon", () => {
@@ -143,99 +135,57 @@ describe("Given I am connected as an employee", () => {
       expect(img.src).toBe('https://test.com/')
     })
     test("Then user should be redirected to new bill form when new bill button is clicked", async () => {
-      //configuration du localStorage pour simuler l'utilisateur connecté
-      Object.defineProperty(window, 'localStorage', { value: localStorageMock });
-      window.localStorage.setItem('user', JSON.stringify({
-        type: 'Employee'
-      }));
-
-      //création d'un élément root pour simuler le rendu de l'interface
-      const root = document.createElement("div");
-      root.setAttribute("id", "root");
-      document.body.append(root);
-
-      // Exécution du routeur pour simuler la navigation sur la page des factures
-      router();
-      window.onNavigate(ROUTES_PATH.Bills);
-
-      //attente de l'affichage de l'interface BillsUI
+      //générer le html de bills ui 
       document.body.innerHTML = BillsUI({ data: bills });
+
+      //mock de la fonction onNavigate (simuler le comportement de navigation lorsque le btn est clické)
+      const onNavigate = jest.fn();
 
       //instanciation de la classe Bills
       const billsContainer = new Bills({
         document,
-        onNavigate: (pathname) => {
-          document.body.innerHTML = ROUTES_PATH[pathname];
-        },
+        onNavigate,
         store: null,
         localStorage: window.localStorage,
       });
 
-      //ajout du bouton New Bill au DOM
+      //selection du btn de la nouvelle note de frais rendu sur bills ui 
       //attente que le bouton "Nouvelle Facture" soit présent dans le DOM
-
       const buttonNewBill = screen.getByTestId('btn-new-bill');
-      expect(buttonNewBill).toBeTruthy();
-
-      buttonNewBill.addEventListener("click", () => {
-        billsContainer.handleClickNewBill();
-      });
-
+      //simulation du click (qui déclenchera la fonction que nous sommes en train de tester : handleClickNewBill)
       userEvent.click(buttonNewBill);
-
-      //attente que l'utilisateur soit redirigé vers la nouvelle page de facturation (NewBillUI)
-      // await waitFor(() => {
-      //   expect(window.location.pathname).toBe(ROUTES_PATH.NewBill);
-      // });
-
-      // Vérification que NewBillUI est correctement rendue dans le DOM
-      // expect(document.body.innerHTML).toContain('form-new-bill');
-
-      // Vérification finale avec getByTestId
-      // expect(screen.getByTestId('form-new-bill')).toBeTruthy();
+      //ce qui est attendu : on navigate appelée avec la bonne route
+      expect(onNavigate).toHaveBeenCalledWith(ROUTES_PATH.NewBill);
     });
 
-
     // test d'intégration GET
-    // test("fetches bills from mock API GET", async () => {
-    //configuration du localStorage pour simuler l'utilisateur connecté
-    //configuration du localStorage pour simuler l'utilisateur connecté
-    // Object.defineProperty(window, 'localStorage', { value: localStorageMock });
-    // window.localStorage.setItem('user', JSON.stringify({
-    //   type: 'Employee'
-    // }));
-    //création d'un élément root pour simuler le rendu de l'interface
-    // const root = document.createElement("div")
-    // root.setAttribute("id", "root")
-    // document.body.append(root)
-    //exécution du routeur pour simuler la navigation sur la page des facture
-    // router()
-    // window.onNavigate(ROUTES_PATH.Bills)
-    // //attente de l'affichage de l'interface BillsUI
-    // await waitFor(() => screen.getByText("Mes notes de frais"))
+    test("fetches bills from mock API GET", async () => {
 
-    //vérification que la table s'affiche avec les noms des colonnes spécifiées
-    // const columns = ["Type", "Nom", "Date", "Montant", "Statut", "Actions"];
-    // columns.forEach(column => {
-    //   expect(screen.getByText(column)).toBeTruthy();
-    // });
+      // utiliser le mock du magasin pour retourner les factures
+      const storeMock = {
+        bills: mockStore.bills,
+      }
 
-    // //instanciation du conteneur Bills
-    // const billsContainer = new Bills({
-    //   document,
-    //   onNavigate: (pathname) => {
-    //     document.body.innerHTML = ROUTES_PATH[pathname];
-    //   },
-    //   store: mockStore,
-    //   localStorage: localStorageMock,
-    // });
+      //instanciation du conteneur Bills
+      const billsContainer = new Bills({
+        document,
+        onNavigate: jest.fn(),
+        store: mockStore,
+        localStorage: localStorageMock,
+      });
 
-    //appel de la méthode getBills pour récupérer les factures
-    // const bills = await billsContainer.getBills();
+      //appel de la méthode getBills pour récupérer les factures
+      const fetchedBills = await billsContainer.getBills();
 
-    //vérification que les factures sont récupérées (peut-être aucune facture)
-    // expect(bills).toBeDefined();
-    // })
+      //verifications 
+      //bills aient la meme longueur que bills gettées
+      expect(fetchedBills).toHaveLength(bills.length);
+
+      //verif que pour chaque bill que sa date soit formatée et son statut (verif des fonctions mockées formatDate et FormatStatus)
+      fetchedBills.forEach((facture) => {
+        expect(facture.date).toEqual(facture.date);
+        expect(facture.status).toEqual(facture.status);
+      })
+    })
   })
 })
-
