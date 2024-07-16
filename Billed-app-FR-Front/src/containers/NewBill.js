@@ -23,6 +23,8 @@ export default class NewBill {
     //fichier chargé par l'user
     const file = fileInput.files[0];
 
+
+
     //verfier l'extension du fichier
     //initialiser un tableau avec les extensions acceptées
     const allowedExt = ['jpg', 'jpeg', 'png'];
@@ -31,7 +33,7 @@ export default class NewBill {
     //ex : document.pdf devient ['document', 'pdf']
     //pop => renvoit le dernier élement du tableau (pdf)
     const fileExt = file.name.split('.').pop().toLowerCase();
-
+    console.log("Extension du fichier:", fileExt);
 
     //si l'extension n'est pas bonne
     if (!allowedExt.includes(fileExt)) {
@@ -46,11 +48,16 @@ export default class NewBill {
     //"image.png"
     const fileName = filePath[filePath.length - 1]
 
+    console.log("Chemin du fichier:", filePath);
+    console.log("Nom du fichier:", fileName);
+
     //crée un objet FormData pour envoyer les données du fichier et l'email de l'utilisateur
     const formData = new FormData()
     const email = JSON.parse(localStorage.getItem("user")).email
     formData.append('file', file)
     formData.append('email', email)
+
+    console.log("Données du form:", formData);
 
     //appelle une méthode `create` sur un objet `bills` du store pour créer la facture
     this.store
@@ -64,6 +71,7 @@ export default class NewBill {
       .then(({ fileUrl, key }) => {
         //affiche l'URL du fichier après sa création
         console.log(fileUrl)
+        console.log(key)
         //stocke l'identifiant de la facture créée
         this.billId = key
         //stocke l'URL du fichier créé

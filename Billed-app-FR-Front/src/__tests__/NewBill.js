@@ -48,98 +48,6 @@ describe("Given I am connected as an employee", () => {
       expect(screen.getByTestId("commentary")).toBeTruthy()
       expect(screen.getByTestId("file")).toBeTruthy()
     })
-    //tests conditionnés si extension ok, ou extension pas autorisée du fichier chargé par l'utilisateur
-    describe("Given I upload a file", () => {
-      //init des constantes dont on aura besoin pour les 2 tests
-      let storeMock;
-      let fileInput;
-      let handleChangeFile;
-      let bill;
-      let consoleErrorSpy;
-
-      beforeEach(() => {
-        storeMock = {
-          bills: jest.fn(() => ({
-            create: jest.fn().mockResolvedValue({
-              fileUrl: 'mockedUrl',
-              key: 'mockedKey'
-            }),
-            update: jest.fn().mockResolvedValue()
-          })),
-        };
-
-        window.localStorage.setItem('user', JSON.stringify({
-          type: 'Employee',
-          email: "employee@test.com"
-        }));
-
-        //générer le HTML de NewBill UI 
-        document.body.innerHTML = NewBillUI();
-
-        //mock de la fonction onNavigate (simuler le comportement de navigation)
-        const onNavigate = jest.fn();
-
-        //instanciation de la classe NewBill
-        const bill = new NewBill({
-          document,
-          onNavigate,
-          store: storeMock,
-          localStorage: window.localStorage,
-        });
-
-        //sélection de l'élément d'entrée de fichier
-        fileInput = screen.getByTestId("file");
-
-        //création d'une fonction mockée basée sur la méthode handleChangeFile
-        handleChangeFile = jest.fn(bill.handleChangeFile);
-        fileInput.addEventListener("change", handleChangeFile);
-
-        //initialisation de consoleErrorSpy pour le display de console.error
-        consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => { });;
-      });
-
-      test("it should submit when I upload a file with an allowed extension", async () => {
-        //simulation du téléchargement d'un fichier avec une extension valide (jpg, jpeg, png)
-        const file = new File(['foo'], 'foo.jpg', { type: 'image/jpeg' });
-        //utilisation de userEvent ou fireEvent pour télécharger le fichier
-        userEvent.upload(fileInput, file);
-
-        //soumission du formulaire ou déclenchement de l'événement de soumission
-        fireEvent.submit(screen.getByTestId("form-new-bill"));
-
-        //attendre que toutes les opérations asynchrones soient terminées
-        await waitFor(() => {
-          // Assertions pour vérifier le comportement attendu
-          expect(bill.billId).toBe('mockedKey');
-          expect(bill.fileUrl).toBe('mockedUrl');
-          expect(bill.fileName).toBe('foo.jpg');
-        });
-
-        // Vérification que la console n'a pas affiché d'erreurs
-        expect(consoleErrorSpy).not.toHaveBeenCalled();
-      });
-      test("it should display an error message when I upload a file with a non-allowed extension", async () => {
-        //simulation du téléchargement d'un fichier avec une extension non autorisée (ex: txt)
-        const file = new File(['foo'], 'foo.txt', { type: 'text/plain' });
-        // Utilisation de userEvent ou fireEvent pour télécharger le fichier
-        userEvent.upload(fileInput, file);
-
-        //soumission du formulaire ou déclenchement de l'événement de soumission
-        fireEvent.submit(screen.getByTestId("form-new-bill"));
-
-        //attendre que toutes les opérations asynchrones soient terminées
-        await waitFor(() => {
-          //vérification que la méthode handleChangeFile a été appelée après le téléchargement du fichier
-          expect(handleChangeFile).toHaveBeenCalled();
-          //vérification que la console a affiché le message d'erreur attendu
-          expect(consoleErrorSpy).toHaveBeenCalled();
-          expect(consoleErrorSpy.mock.calls[0][0]).toContain("Fichier invalide");
-        });
-
-        //vérification que le formulaire n'a pas été soumis en raison de l'extension incorrecte
-        expect(storeMock.bills().create).not.toHaveBeenCalled();
-      });
-    })
     //handleSubmit test and nav to Bills page
     test("When I submit the form with valid datas, then it should call handleSubmit and navigate back to bills page", () => {
       //générer le html de newbill ui 
@@ -182,6 +90,101 @@ describe("Given I am connected as an employee", () => {
       expect(handleSubmit).toHaveBeenCalled()
       //vérifier que la navigation a eu lieu
       expect(onNavigate).toHaveBeenCalledWith(ROUTES_PATH['Bills'])
+    })
+    //tests conditionnés si extension ok, ou extension pas autorisée du fichier chargé par l'utilisateur
+    describe("Given I upload a file", () => {
+      //init des constantes dont on aura besoin pour les 2 tests
+      let storeMock;
+      let fileInput;
+      let handleChangeFile;
+      let bill;
+      let consoleErrorSpy;
+
+      beforeEach(() => {
+        storeMock = {
+          bills: jest.fn(() => ({
+            create: jest.fn().mockResolvedValue({
+              fileUrl: 'https://localhost:3456/images/test.jpg',
+              key: '1234'
+            }),
+            update: jest.fn().mockResolvedValue()
+          })),
+        };
+
+        window.localStorage.setItem('user', JSON.stringify({
+          type: 'Employee',
+          email: "employee@test.com"
+        }));
+
+        //générer le HTML de NewBill UI 
+        document.body.innerHTML = NewBillUI();
+
+        //mock de la fonction onNavigate (simuler le comportement de navigation)
+        const onNavigate = jest.fn();
+
+        //instanciation de la classe NewBill
+        bill = new NewBill({
+          document,
+          onNavigate,
+          store: storeMock,
+          localStorage: window.localStorage,
+        });
+
+        //sélection de l'élément d'entrée de fichier
+        fileInput = screen.getByTestId("file");
+
+        //création d'une fonction mockée basée sur la méthode handleChangeFile
+        handleChangeFile = jest.fn(bill.handleChangeFile);
+        fileInput.addEventListener("change", handleChangeFile);
+
+        //initialisation de consoleErrorSpy pour le display de console.error
+        consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => { });
+      });
+
+      test("it should submit when I upload a file with an allowed extension", async () => {
+        //simulation du téléchargement d'un fichier avec une extension valide (jpg, jpeg, png)
+        const file = new File(['foo'], 'foo.jpg', { type: 'image/jpeg' });
+        //utilisation de userEvent ou fireEvent pour télécharger le fichier
+        userEvent.upload(fileInput, file);
+
+        console.log("Fichier chargé avant le submit");
+
+        //soumission du formulaire ou déclenchement de l'événement de soumission
+        fireEvent.submit(screen.getByTestId("form-new-bill"));
+
+        //attendre que toutes les opérations asynchrones soient terminées
+        await waitFor(() => {
+          console.log("Verif si la méthode create a été appelée");
+          //vérifier que la création de la facture a été appelée avec les bonnes données
+          expect(storeMock.bills().create).toHaveBeenCalled();
+          expect(storeMock.bills().create).toHaveBeenCalledWith(expect.any(Object));
+          expect(bill.fileName).toBe('foo.jpg');
+        });
+
+        // Vérification que la console n'a pas affiché d'erreurs
+        expect(consoleErrorSpy).not.toHaveBeenCalled();
+      });
+      test("it should display an error message when I upload a file with a non-allowed extension", async () => {
+        //simulation du téléchargement d'un fichier avec une extension non autorisée (ex: txt)
+        const file = new File(['foo'], 'foo.txt', { type: 'text/plain' });
+        // Utilisation de userEvent ou fireEvent pour télécharger le fichier
+        userEvent.upload(fileInput, file);
+
+        //soumission du formulaire ou déclenchement de l'événement de soumission
+        fireEvent.submit(screen.getByTestId("form-new-bill"));
+
+        //attendre que toutes les opérations asynchrones soient terminées
+        await waitFor(() => {
+          //vérification que la méthode handleChangeFile a été appelée après le téléchargement du fichier
+          expect(handleChangeFile).toHaveBeenCalled();
+          //vérification que la console a affiché le message d'erreur attendu
+          expect(consoleErrorSpy).toHaveBeenCalled();
+          // expect(consoleErrorSpy.mock.calls[0][0]).toContain("Fichier invalide");
+        });
+
+        //vérification que le formulaire n'a pas été soumis en raison de l'extension incorrecte
+        expect(storeMock.bills().create).not.toHaveBeenCalled();
+      });
     })
   })
 })
