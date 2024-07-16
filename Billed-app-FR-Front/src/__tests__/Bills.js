@@ -170,7 +170,7 @@ describe("Given I am connected as an employee", () => {
       const billsContainer = new Bills({
         document,
         onNavigate: jest.fn(),
-        store: mockStore,
+        store: storeMock,
         localStorage: localStorageMock,
       });
 

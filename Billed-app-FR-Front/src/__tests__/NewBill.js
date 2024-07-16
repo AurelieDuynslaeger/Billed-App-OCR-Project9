@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 
-import { screen, fireEvent } from "@testing-library/dom"
+import { screen, fireEvent, waitFor } from "@testing-library/dom"
 import userEvent from "@testing-library/user-event"
 import NewBillUI from "../views/NewBillUI.js"
 import NewBill from "../containers/NewBill.js"
@@ -48,82 +48,99 @@ describe("Given I am connected as an employee", () => {
       expect(screen.getByTestId("commentary")).toBeTruthy()
       expect(screen.getByTestId("file")).toBeTruthy()
     })
+    //tests conditionnés si extension ok, ou extension pas autorisée du fichier chargé par l'utilisateur
+    describe("Given I upload a file", () => {
+      //init des constantes dont on aura besoin pour les 2 tests
+      let storeMock;
+      let fileInput;
+      let handleChangeFile;
+      let bill;
+      let consoleErrorSpy;
 
-    test("Then I upload a file with an incorrect extension it should display an error message", () => {
-      // Utiliser le mock du magasin pour retourner les factures
-      const storeMock = {
-        bills: jest.fn(() => ({
-          create: jest.fn().mockResolvedValueOnce({ fileUrl: 'mockedUrl', key: 'mockedKey' })
-        }))
-      };
-      //générer le html de newbill ui 
-      document.body.innerHTML = NewBillUI();
-      //mock de la fonction onNavigate (simuler le comportement de navigation)
-      const onNavigate = jest.fn();
+      beforeEach(() => {
+        storeMock = {
+          bills: jest.fn(() => ({
+            create: jest.fn().mockResolvedValue({
+              fileUrl: 'mockedUrl',
+              key: 'mockedKey'
+            }),
+            update: jest.fn().mockResolvedValue()
+          })),
+        };
 
-      //instanciation de la classe Bills
-      const bill = new NewBill({
-        document,
-        onNavigate,
-        store: storeMock,
-        localStorage: window.localStorage,
+        window.localStorage.setItem('user', JSON.stringify({
+          type: 'Employee',
+          email: "employee@test.com"
+        }));
+
+        //générer le HTML de NewBill UI 
+        document.body.innerHTML = NewBillUI();
+
+        //mock de la fonction onNavigate (simuler le comportement de navigation)
+        const onNavigate = jest.fn();
+
+        //instanciation de la classe NewBill
+        const bill = new NewBill({
+          document,
+          onNavigate,
+          store: storeMock,
+          localStorage: window.localStorage,
+        });
+
+        //sélection de l'élément d'entrée de fichier
+        fileInput = screen.getByTestId("file");
+
+        //création d'une fonction mockée basée sur la méthode handleChangeFile
+        handleChangeFile = jest.fn(bill.handleChangeFile);
+        fileInput.addEventListener("change", handleChangeFile);
+
+        //initialisation de consoleErrorSpy pour le display de console.error
+        consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => { });;
       });
 
-      // Capturer les messages d'erreur de la console
-      const consoleErrorSpy = jest.spyOn(console, 'error');
-      consoleErrorSpy.mockImplementation(() => { });
+      test("it should submit when I upload a file with an allowed extension", async () => {
+        //simulation du téléchargement d'un fichier avec une extension valide (jpg, jpeg, png)
+        const file = new File(['foo'], 'foo.jpg', { type: 'image/jpeg' });
+        //utilisation de userEvent ou fireEvent pour télécharger le fichier
+        userEvent.upload(fileInput, file);
 
-      //création d'une fonction mockée qui est basé sur la méthode handleChangeFile, permet de vori si la méthode est appelée et controler son comportement
-      const handleChangeFile = jest.fn(bill.handleChangeFile)
+        //soumission du formulaire ou déclenchement de l'événement de soumission
+        fireEvent.submit(screen.getByTestId("form-new-bill"));
 
-      //selection de l'élément d'entrée d'un fichier
-      const fileInput = screen.getByTestId("file")
+        //attendre que toutes les opérations asynchrones soient terminées
+        await waitFor(() => {
+          // Assertions pour vérifier le comportement attendu
+          expect(bill.billId).toBe('mockedKey');
+          expect(bill.fileUrl).toBe('mockedUrl');
+          expect(bill.fileName).toBe('foo.jpg');
+        });
 
-      //on écoute le changelent surc cet input
-      //si un changement est détecté, la fonction handleChangeFile est appelée
-      fileInput.addEventListener("change", handleChangeFile)
-
-      //nvl objet File (nom ="foo", fichier= "foo.txt" type du fichier)
-      const file = new File(['foo'], 'foo.txt', { type: 'text/plain' })
-
-      //simulation de l'action de upload par l'user
-      userEvent.upload(fileInput, file)
-
-      //verification que la fonction ait bien été appélé après le dl du fichier
-      expect(handleChangeFile).toHaveBeenCalled();
-
-      //simuler la soumission
-      fireEvent.submit(screen.getByTestId("form-new-bill"));
-
-
-      //s'assurer que la méthode create est appelée avec le FormData correct
-      const formData = new FormData();
-      const email = JSON.parse(localStorage.getItem("user")).email;
-      formData.append('file', file);
-      formData.append('email', email);
-
-      expect(storeMock.bills().create).toHaveBeenCalledWith({
-        data: formData,
-        headers: {
-          noContentType: true
-        }
+        // Vérification que la console n'a pas affiché d'erreurs
+        expect(consoleErrorSpy).not.toHaveBeenCalled();
       });
+      test("it should display an error message when I upload a file with a non-allowed extension", async () => {
+        //simulation du téléchargement d'un fichier avec une extension non autorisée (ex: txt)
+        const file = new File(['foo'], 'foo.txt', { type: 'text/plain' });
+        // Utilisation de userEvent ou fireEvent pour télécharger le fichier
+        userEvent.upload(fileInput, file);
 
-      //s'assurers que billId, fileUrl et fileName sont correctement mis à jour
-      expect(bill.billId).toBe('mockedKey');
-      expect(bill.fileUrl).toBe('mockedUrl');
-      expect(bill.fileName).toBe('foo.jpg');
-      //vérification que la valeur de l'élément d'entrée de fichier (fileInput) est vide après avoir tenté de télécharger le fichier, ce qui indique que le fichier avec l'extension incorrecte n'a pas été accepté.
-      expect(fileInput.value).toBe("")
-      // Vérifier que console.error a été appelé avec le message d'erreur attendu
-      expect(consoleErrorSpy).toHaveBeenCalled();
-      expect(consoleErrorSpy.mock.calls[0][0]).toContain("Fichier invalide");
+        //soumission du formulaire ou déclenchement de l'événement de soumission
+        fireEvent.submit(screen.getByTestId("form-new-bill"));
 
-      // Restaurer la fonction d'origine de console.error
-      consoleErrorSpy.mockRestore();
+        //attendre que toutes les opérations asynchrones soient terminées
+        await waitFor(() => {
+          //vérification que la méthode handleChangeFile a été appelée après le téléchargement du fichier
+          expect(handleChangeFile).toHaveBeenCalled();
+          //vérification que la console a affiché le message d'erreur attendu
+          expect(consoleErrorSpy).toHaveBeenCalled();
+          expect(consoleErrorSpy.mock.calls[0][0]).toContain("Fichier invalide");
+        });
 
+        //vérification que le formulaire n'a pas été soumis en raison de l'extension incorrecte
+        expect(storeMock.bills().create).not.toHaveBeenCalled();
+      });
     })
-
+    //handleSubmit test and nav to Bills page
     test("When I submit the form with valid datas, then it should call handleSubmit and navigate back to bills page", () => {
       //générer le html de newbill ui 
       document.body.innerHTML = NewBillUI();
@@ -142,9 +159,9 @@ describe("Given I am connected as an employee", () => {
         store: mockStore,
         localStorage: window.localStorage,
       });
+
       const handleSubmit = jest.fn(bill.handleSubmit)
       const form = screen.getByTestId("form-new-bill")
-
 
       bill.fileUrl = 'C:Users/Username/Documents/file.jpg'
       bill.fileName = 'file.jpg'
