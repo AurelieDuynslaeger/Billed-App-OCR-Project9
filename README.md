@@ -33,6 +33,8 @@ Elaboration également un plan de test end-to-end manuel pour assurer le bon fon
 
 
  <img src="billed_homepage.png" alt="homepage" width="500">
+ <img src="NotionBugsReport.png" alt="homepage" width="500">
+ <img src="./tests/test pass bill and login.png" alt="homepage" width="500">
 
 
 ## Langages utilisés et autres technologies utilisées
