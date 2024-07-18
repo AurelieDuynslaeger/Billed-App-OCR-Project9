@@ -32,7 +32,7 @@ export const card = (bill) => {
   const firstName = firstAndLastNames.includes('.') ?
     firstAndLastNames.split('.')[0] : ''
   const lastName = firstAndLastNames.includes('.') ?
-  firstAndLastNames.split('.')[1] : firstAndLastNames
+    firstAndLastNames.split('.')[1] : firstAndLastNames
 
   return (`
     <div class='bill-card' id='open-bill${bill.id}' data-testid='open-bill${bill.id}'>
@@ -86,28 +86,34 @@ export default class {
   }
 
   handleEditTicket(e, bill, bills) {
-    if (this.counter === undefined || this.id !== bill.id) this.counter = 0
-    if (this.id === undefined || this.id !== bill.id) this.id = bill.id
-    if (this.counter % 2 === 0) {
-      bills.forEach(b => {
-        $(`#open-bill${b.id}`).css({ background: '#0D5AE5' })
-      })
-      $(`#open-bill${bill.id}`).css({ background: '#2A2B35' })
-      $('.dashboard-right-container div').html(DashboardFormUI(bill))
-      $('.vertical-navbar').css({ height: '150vh' })
-      this.counter ++
-    } else {
-      $(`#open-bill${bill.id}`).css({ background: '#0D5AE5' })
 
-      $('.dashboard-right-container div').html(`
-        <div id="big-billed-icon" data-testid="big-billed-icon"> ${BigBilledIcon} </div>
-      `)
-      $('.vertical-navbar').css({ height: '120vh' })
-      this.counter ++
-    }
-    $('#icon-eye-d').click(this.handleClickIconEye)
-    $('#btn-accept-bill').click((e) => this.handleAcceptSubmit(e, bill))
-    $('#btn-refuse-bill').click((e) => this.handleRefuseSubmit(e, bill))
+    /**
+     * suppression du counter : il alternait entre deux états à chaque clic. Lorsqu'il était pair, il mettait à jour les détails du ticket sélectionné. Lorsqu'il était impair, il revenait à un état précédent, ne mettant pas à jour les détails.
+     * l'alternance donc empêchait la mise à jour des détails du ticket 
+     * donc élimination de la logique d'alternance
+     * simplification de la fonction pour qu'elle réinitialise tjr l'apparence des tickets, et mise à jour du ticket selectionnée grâce à son id avec le DashboardFormUI
+     */
+    //met à jour l'ID du bill sélectionné
+    this.id = bill.id;
+
+    //réinitialise l'apparence de tous les bills dans la liste
+    bills.forEach(b => {
+      $(`#open-bill${b.id}`).css({ background: '#0D5AE5' });
+    });
+
+    //met à jour l'apparence du bill sélectionné
+    $(`#open-bill${bill.id}`).css({ background: '#2A2B35' });
+
+    //remplace le contenu de la partie droite du tableau de bord par les détails du bill sélectionné
+    $('.dashboard-right-container div').html(DashboardFormUI(bill));
+
+    //ajuste la hauteur de la barre de navigation verticale
+    $('.vertical-navbar').css({ height: '150vh' });
+
+    //réattache les gestionnaires d'événements pour les actions du bill
+    $('#icon-eye-d').off('click').on('click', this.handleClickIconEye);
+    $('#btn-accept-bill').off('click').on('click', (e) => this.handleAcceptSubmit(e, bill));
+    $('#btn-refuse-bill').off('click').on('click', (e) => this.handleRefuseSubmit(e, bill));
   }
 
   handleAcceptSubmit = (e, bill) => {
@@ -134,15 +140,15 @@ export default class {
     if (this.counter === undefined || this.index !== index) this.counter = 0
     if (this.index === undefined || this.index !== index) this.index = index
     if (this.counter % 2 === 0) {
-      $(`#arrow-icon${this.index}`).css({ transform: 'rotate(0deg)'})
+      $(`#arrow-icon${this.index}`).css({ transform: 'rotate(0deg)' })
       $(`#status-bills-container${this.index}`)
         .html(cards(filteredBills(bills, getStatus(this.index))))
-      this.counter ++
+      this.counter++
     } else {
-      $(`#arrow-icon${this.index}`).css({ transform: 'rotate(90deg)'})
+      $(`#arrow-icon${this.index}`).css({ transform: 'rotate(90deg)' })
       $(`#status-bills-container${this.index}`)
         .html("")
-      this.counter ++
+      this.counter++
     }
 
     bills.forEach(bill => {
@@ -156,21 +162,21 @@ export default class {
   getBillsAllUsers = () => {
     if (this.store) {
       return this.store
-      .bills()
-      .list()
-      .then(snapshot => {
-        const bills = snapshot
-        .map(doc => ({
-          id: doc.id,
-          ...doc,
-          date: doc.date,
-          status: doc.status
-        }))
-        return bills
-      })
-      .catch(error => {
-        throw error;
-      })
+        .bills()
+        .list()
+        .then(snapshot => {
+          const bills = snapshot
+            .map(doc => ({
+              id: doc.id,
+              ...doc,
+              date: doc.date,
+              status: doc.status
+            }))
+          return bills
+        })
+        .catch(error => {
+          throw error;
+        })
     }
   }
 
@@ -178,11 +184,11 @@ export default class {
   /* istanbul ignore next */
   updateBill = (bill) => {
     if (this.store) {
-    return this.store
-      .bills()
-      .update({data: JSON.stringify(bill), selector: bill.id})
-      .then(bill => bill)
-      .catch(console.log)
+      return this.store
+        .bills()
+        .update({ data: JSON.stringify(bill), selector: bill.id })
+        .then(bill => bill)
+        .catch(console.log)
     }
   }
 }
