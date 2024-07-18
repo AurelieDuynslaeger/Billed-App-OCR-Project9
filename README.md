@@ -31,6 +31,8 @@ La mission principale sera de corriger les bugs d’un système RH et de finalis
 
 Elaboration également un plan de test end-to-end manuel pour assurer le bon fonctionnement du parcours employé de l'application.
 
+En quelques chiffres : couvrir le maximum de statements sur Bill et NewBill afin d'atteindre pour ces containers 80% de code coverage minimum, ainsi que la couverture DES containers (80% min). 
+
 
  <img src="billed_homepage.png" alt="homepage" width="500">
  <img src="NotionBugsReport.png" alt="homepage" width="500">
