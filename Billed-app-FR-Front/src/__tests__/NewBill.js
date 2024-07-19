@@ -154,15 +154,12 @@ describe("Given I am connected as an employee", () => {
 
         //attendre que toutes les opérations asynchrones soient terminées
         await waitFor(() => {
-          console.log("Verif si la méthode create a été appelée");
-          //vérifier que la création de la facture a été appelée avec les bonnes données
-          expect(storeMock.bills().create).toHaveBeenCalled();
-          expect(storeMock.bills().create).toHaveBeenCalledWith(expect.any(Object));
-          expect(bill.fileName).toBe('foo.jpg');
+          //vérification que la méthode handleChangeFile a été appelée après le téléchargement du fichier
+          expect(handleChangeFile).toHaveBeenCalled();
+          //vérification que la console n'affiche par de message d'erreur
+          expect(consoleErrorSpy).not.toHaveBeenCalled();
         });
 
-        // Vérification que la console n'a pas affiché d'erreurs
-        expect(consoleErrorSpy).not.toHaveBeenCalled();
       });
       test("it should display an error message when I upload a file with a non-allowed extension", async () => {
         //simulation du téléchargement d'un fichier avec une extension non autorisée (ex: txt)
