@@ -14,6 +14,7 @@ import router from "../app/Router.js";
 //import du mockStore avec les mockedBills
 import mockStore from "../__mocks__/store";
 
+
 // Mock des fonctions formatDate et formatStatus
 jest.mock("../app/format.js", () => ({
   formatDate: jest.fn(date => `formatted_${date}`),
@@ -187,5 +188,51 @@ describe("Given I am connected as an employee", () => {
         expect(facture.status).toEqual(facture.status);
       })
     })
+
+    // describe("When an error occurs on API", () => {
+    //   beforeEach(() => {
+
+    //     jest.spyOn(mockStore, "bills")
+    //     Object.defineProperty(
+    //       window,
+    //       'localStorage',
+    //       { value: localStorageMock }
+    //     )
+    //     window.localStorage.setItem('user', JSON.stringify({
+    //       type: 'Employee',
+    //       email: "a@a"
+    //     }))
+    //     const root = document.createElement("div")
+    //     root.setAttribute("id", "root")
+    //     document.body.appendChild(root)
+    //     router()
+    //   })
+    //   test("fetches bills from an API and fails with 404 message error", async () => {
+
+    //     mockStore.bills.mockImplementationOnce(() => {
+    //       return {
+    //         list: () => {
+    //           return Promise.reject(new Error("Erreur 404"))
+    //         }
+    //       }
+    //     })
+    //     window.onNavigate(ROUTES_PATH.Bills)
+    //     await waitFor(() => expect(screen.getByText(/Erreur 404/)).toBeTruthy())
+    //   })
+
+    //   test("fetches messages from an API and fails with 500 message error", async () => {
+
+    //     mockStore.bills.mockImplementationOnce(() => {
+    //       return {
+    //         list: () => {
+    //           return Promise.reject(new Error("Erreur 500"))
+    //         }
+    //       }
+    //     })
+
+    //     window.onNavigate(ROUTES_PATH.Bills)
+    //     await waitFor(() => expect(screen.getByText(/Erreur 500/)).toBeTruthy())
+    //   })
+    // })
   })
 })

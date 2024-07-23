@@ -183,5 +183,8 @@ describe("Given I am connected as an employee", () => {
         expect(storeMock.bills().create).not.toHaveBeenCalled();
       });
     })
+
+    //test error 404 & 500
   })
 })
+
