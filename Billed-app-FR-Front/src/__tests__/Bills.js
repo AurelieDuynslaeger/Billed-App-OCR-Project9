@@ -14,6 +14,14 @@ import router from "../app/Router.js";
 //import du mockStore avec les mockedBills
 import mockStore from "../__mocks__/store";
 
+jest.mock("../app/store", () => ({
+  __esModule: true,
+  default: {
+    bills: jest.fn(() => ({
+      list: jest.fn().mockRejectedValue(new Error("Erreur 404")),
+    })),
+  },
+}));
 
 // Mock des fonctions formatDate et formatStatus
 jest.mock("../app/format.js", () => ({
@@ -189,50 +197,25 @@ describe("Given I am connected as an employee", () => {
       })
     })
 
-    // describe("When an error occurs on API", () => {
-    //   beforeEach(() => {
-
-    //     jest.spyOn(mockStore, "bills")
-    //     Object.defineProperty(
-    //       window,
-    //       'localStorage',
-    //       { value: localStorageMock }
-    //     )
-    //     window.localStorage.setItem('user', JSON.stringify({
-    //       type: 'Employee',
-    //       email: "a@a"
-    //     }))
-    //     const root = document.createElement("div")
-    //     root.setAttribute("id", "root")
-    //     document.body.appendChild(root)
-    //     router()
-    //   })
-    //   test("fetches bills from an API and fails with 404 message error", async () => {
-
-    //     mockStore.bills.mockImplementationOnce(() => {
-    //       return {
-    //         list: () => {
-    //           return Promise.reject(new Error("Erreur 404"))
-    //         }
-    //       }
-    //     })
-    //     window.onNavigate(ROUTES_PATH.Bills)
-    //     await waitFor(() => expect(screen.getByText(/Erreur 404/)).toBeTruthy())
-    //   })
-
-    //   test("fetches messages from an API and fails with 500 message error", async () => {
-
-    //     mockStore.bills.mockImplementationOnce(() => {
-    //       return {
-    //         list: () => {
-    //           return Promise.reject(new Error("Erreur 500"))
-    //         }
-    //       }
-    //     })
-
-    //     window.onNavigate(ROUTES_PATH.Bills)
-    //     await waitFor(() => expect(screen.getByText(/Erreur 500/)).toBeTruthy())
-    //   })
-    // })
+    //Test errorPage on Bills.js
+    describe("When data fetching fails", () => {
+      //test de l'erreur 404
+      test("Then, ErrorPage should be rendered", async () => {
+        //simule l'échec de la récupération des données avec une erreur 404
+        jest.spyOn(mockStore, "bills").mockImplementationOnce(() => ({
+          list: () => Promise.reject(new Error("Erreur 404")),
+        }));
+        document.body.innerHTML = BillsUI({ error: "Erreur 404" });
+        expect(screen.getByText(/Erreur 404/)).toBeTruthy();
+      });
+      test("Then, ErrorPage should be rendered", async () => {
+        //simule l'échec de la récupération des données avec une erreur 500
+        jest.spyOn(mockStore, "bills").mockImplementationOnce(() => ({
+          list: () => Promise.reject(new Error("Erreur 500")),
+        }));
+        document.body.innerHTML = BillsUI({ error: "Erreur 500" });
+        expect(screen.getByText(/Erreur 500/)).toBeTruthy();
+      });
+    });
   })
 })
