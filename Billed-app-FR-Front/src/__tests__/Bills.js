@@ -198,21 +198,42 @@ describe("Given I am connected as an employee", () => {
     })
 
     //Test errorPage on Bills.js
-    describe("When data fetching fails", () => {
-      //test de l'erreur 404
-      test("Then, ErrorPage should be rendered", async () => {
-        //simule l'échec de la récupération des données avec une erreur 404
+    describe("Lorsque la récupération des données échoue", () => {
+      let billsInstance;
+
+      beforeEach(() => {
+        //rendre BillsUI avec des données initialement vides
+        document.body.innerHTML = BillsUI({ data: [], loading: false, error: null });
+        billsInstance = new Bills({
+          document,
+          onNavigate: jest.fn(),
+          store: mockStore,
+          localStorage: window.localStorage
+        });
+      });
+
+      test("Alors, ErrorPage devrait être rendue pour l'erreur 404", async () => {
+        //simuler l'échec de la récupération des données avec une erreur 404
         jest.spyOn(mockStore, "bills").mockImplementationOnce(() => ({
           list: () => Promise.reject(new Error("Erreur 404")),
         }));
+
+        //appeler getBills et vérifier si la page d'erreur s'affiche
+        //attraper l'erreur pour éviter un avertissement dans la console
+        await billsInstance.getBills().catch(() => { });
         document.body.innerHTML = BillsUI({ error: "Erreur 404" });
         expect(screen.getByText(/Erreur 404/)).toBeTruthy();
       });
-      test("Then, ErrorPage should be rendered", async () => {
-        //simule l'échec de la récupération des données avec une erreur 500
+
+      test("Alors, ErrorPage devrait être rendue pour l'erreur 500", async () => {
+        //simuler l'échec de la récupération des données avec une erreur 500
         jest.spyOn(mockStore, "bills").mockImplementationOnce(() => ({
           list: () => Promise.reject(new Error("Erreur 500")),
         }));
+
+        //appeler getBills et vérifier si la page d'erreur s'affiche
+        //attraper l'erreur pour éviter un avertissement dans la console
+        await billsInstance.getBills().catch(() => { });
         document.body.innerHTML = BillsUI({ error: "Erreur 500" });
         expect(screen.getByText(/Erreur 500/)).toBeTruthy();
       });
