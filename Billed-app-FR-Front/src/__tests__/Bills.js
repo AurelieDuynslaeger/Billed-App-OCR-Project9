@@ -198,7 +198,7 @@ describe("Given I am connected as an employee", () => {
     })
 
     //Test errorPage on Bills.js
-    describe("Lorsque la récupération des données échoue", () => {
+    describe("When an error occurs on API", () => {
       let billsInstance;
 
       beforeEach(() => {
@@ -212,7 +212,7 @@ describe("Given I am connected as an employee", () => {
         });
       });
 
-      test("Alors, ErrorPage devrait être rendue pour l'erreur 404", async () => {
+      test("fetches bills from an API and fails with 404 message error (error page 404)", async () => {
         //simuler l'échec de la récupération des données avec une erreur 404
         jest.spyOn(mockStore, "bills").mockImplementationOnce(() => ({
           list: () => Promise.reject(new Error("Erreur 404")),
@@ -225,7 +225,7 @@ describe("Given I am connected as an employee", () => {
         expect(screen.getByText(/Erreur 404/)).toBeTruthy();
       });
 
-      test("Alors, ErrorPage devrait être rendue pour l'erreur 500", async () => {
+      test("fetches messages from an API and fails with 500 message error (error page 500)", async () => {
         //simuler l'échec de la récupération des données avec une erreur 500
         jest.spyOn(mockStore, "bills").mockImplementationOnce(() => ({
           list: () => Promise.reject(new Error("Erreur 500")),
