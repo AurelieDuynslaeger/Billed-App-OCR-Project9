@@ -52,6 +52,9 @@ export default class {
                 }
               }
             })
+
+          //filtre décroissant 
+          bills.sort((a, b) => new Date(b.date) - new Date(a.date))
           console.log('length', bills.length)
           return bills
         })
